@@ -1,59 +1,65 @@
 USE company_bd;
 
 -- Show the number of employees in each department.
-SELECT 
-    department, COUNT(*) AS employee_count
-FROM
-    employees
-GROUP BY department;
-
--- Show the average salary per department, rounded to 2 decimal places.
-SELECT
+select
 	department,
-    round(AVG(salary), 2) AS average_salary
-FROM
+    count(*) as employee_count_department
+from
 	employees
-GROUP BY
+group by
 	department;
 
+-- Show the average salary per department, rounded to 2 decimal places.
+select
+	department,
+    round(avg(salary))
+from
+	employees
+group by
+	department;
+	
 -- Show the total sales amount per employee_id from sales_transactions.
-SELECT
+select
 	employee_id,
-    sum(amount) AS sales_per_empl_id
-FROM
+    sum(amount) as total_sales
+from
 	sales_transactions
-GROUP BY
+group by
 	employee_id;
 
 -- Find departments that have more than 2 employees.
-SELECT
+select
 	department,
-    count(*) AS employee_count
-FROM
+    count(*) as employee_count
+from
 	employees
-GROUP BY
+group by
 	department
-HAVING
-	count(*) > 2;
-	
+having
+	employee_count > 2;
+
 -- Find employees by employee_id whose total sales exceed 5000.
-SELECT
+select
 	employee_id,
-    sum(amount) AS exceed_5000
-FROM
+    sum(amount) as total_sales_more_5000
+from
 	sales_transactions
-GROUP BY
+group by
 	employee_id
-HAVING
-	sum(amount) > 5000;
+having
+	total_sales_more_5000 > 5000;
 
 -- Show minimum and maximum salary per department, ordered by maximum salary descending.
-SELECT 
-    department,
-    MIN(salary) AS min_salary,
-    MAX(salary) AS max_salary
-FROM
-    employees
-GROUP BY department
-ORDER BY max_salary DESC;
+select
+	department,
+    min(salary) AS min_salary,
+    max(salary) AS max_salary
+from
+	employees
+group by
+	department
+order by
+	max_salary DESC;
+
+
 	
