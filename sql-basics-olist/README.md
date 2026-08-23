@@ -26,13 +26,20 @@ Loaded into PostgreSQL via `\copy`.
 **1. % of orders never delivered** (handling NULLs with `FILTER`)
 ```sql
 SELECT
-    COUNT(*) AS total_orders,
-    COUNT(*) FILTER (WHERE order_delivered_customer_date IS NULL) AS undelivered,
-    ROUND(
-        100.0 * COUNT(*) FILTER (WHERE order_delivered_customer_date IS NULL) / COUNT(*),
-        2
-    ) AS pct_undelivered
-FROM orders;
+	COUNT(*) AS TOTAL_ORDERS,
+	COUNT(*) FILTER (
+		WHERE
+			ORDER_DELIVERED_CUSTOMER_DATE IS NULL
+	) AS UNDELIVERED,
+	ROUND(
+		100.0 * COUNT(*) FILTER (
+			WHERE
+				ORDER_DELIVERED_CUSTOMER_DATE IS NULL
+		) / COUNT(*),
+		2
+	) AS PCT_UNDELIVERED
+FROM
+	ORDERS;
 ```
 Answers: how much of the dataset represents failed deliveries — relevant
 for any "why did we lose this customer" business question later.
@@ -40,37 +47,50 @@ for any "why did we lose this customer" business question later.
 **2. Order statuses over 5% of total volume** (subquery in `HAVING`)
 ```sql
 SELECT
-    order_status,
-    COUNT(*) AS status_count
-FROM orders
-GROUP BY order_status
-HAVING COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders) > 5;
+	COUNT(ORDER_STATUS) AS STATUS_COUNT,
+	ORDER_STATUS
+FROM
+	ORDERS
+GROUP BY
+	ORDER_STATUS
+HAVING
+	5 < COUNT(ORDER_STATUS) * 100.0 / (
+		SELECT
+			COUNT(*)
+		FROM
+			ORDERS
+	);
 ```
 Filters out rare/noise statuses so a status breakdown isn't cluttered
 with edge cases that barely register.
 
-**3. Price segmentation with CASE + GROUP BY**
+**3. Price segmentation with CASE + GROUP BY + %**
 ```sql
 SELECT
-    CASE
-        WHEN price < 50 THEN 'cheap'
-        ELSE 'expensive'
-    END AS price_bucket,
-    COUNT(*) AS item_count
-FROM order_items
+	CASE
+		WHEN PRICE > 50 THEN 'expensive'
+		ELSE 'cheap'
+	END AS FLAGED_PRICE,
+	COUNT(*) AS ITEM_COUNT,
+	ROUND
+	(
+	COUNT(*) * 100.0/(SELECT COUNT(*) FROM ORDER_ITEMS), 2
+	) AS PCT_OF_TOTAL
+FROM
+	ORDER_ITEMS
 GROUP BY
-    CASE
-        WHEN price < 50 THEN 'cheap'
-        ELSE 'expensive'
-    END;
+	CASE
+		WHEN PRICE > 50 THEN 'expensive'
+		ELSE 'cheap'
+	END;
 ```
 Buckets items into segments for a rough view of product pricing mix.
 
 ## What surprised me
 
-- [Fill in: the actual % of undelivered orders you found]
-- [Fill in: which order statuses cleared the 5% threshold and which didn't]
-- [Fill in: anything about the cheap/expensive split that stood out]
+- 2.98% of orders were not delivered, the number is low, so it's a good sign.
+- Only one status survived 5% threshold - delivered
+- 34% of products where cheap
 
 ## Setup
 
@@ -102,8 +122,3 @@ CREATE TABLE order_items (
 \copy order_items FROM 'data/olist_order_items_dataset.csv' DELIMITER ',' CSV HEADER;
 ```
 
-## Next stage
-
-Multi-table joins across the full Olist schema (customers, products,
-sellers, payments) — business questions like top products by revenue
-per month and customer retention.
