@@ -68,7 +68,7 @@ with edge cases that barely register.
 ```sql
 SELECT
 	CASE
-		WHEN PRICE > 50 THEN 'expensive'
+		WHEN PRICE >= 50 THEN 'expensive'
 		ELSE 'cheap'
 	END AS FLAGED_PRICE,
 	COUNT(*) AS ITEM_COUNT,
